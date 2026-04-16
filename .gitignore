@@ -1,0 +1,98 @@
+# ===================================
+# ROOT GITIGNORE
+# Driver Management System
+# ===================================
+
+# ===================================
+# BACKEND (Go)
+# ===================================
+backend/*.exe
+backend/*.exe~
+backend/*.dll
+backend/*.so
+backend/*.dylib
+backend/bin/
+backend/dist/
+backend/*.test
+backend/*.out
+backend/vendor/
+backend/go.work
+backend/.env
+backend/tmp/
+backend/serviceAccount.json
+
+# ===================================
+# FRONTEND (SvelteKit/Node)
+# ===================================
+frontend/node_modules/
+frontend/.output/
+frontend/.vercel/
+frontend/.netlify/
+frontend/.wrangler/
+frontend/.svelte-kit/
+frontend/build/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+!frontend/.env.test
+frontend/vite.config.js.timestamp-*
+frontend/vite.config.ts.timestamp-*
+
+# ===================================
+# MOBILE (Android/Kotlin)
+# ===================================
+mobile/*.iml
+mobile/.gradle/
+mobile/local.properties
+mobile/.idea/
+mobile/build/
+mobile/captures/
+mobile/.externalNativeBuild/
+mobile/.cxx/
+mobile/app/build/
+mobile/app/google-services.json
+
+# ===================================
+# IDE & EDITORS
+# ===================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# ===================================
+# OS SPECIFIC
+# ===================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ===================================
+# LOGS & TEMP FILES
+# ===================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===================================
+# SENSITIVE FILES
+# ===================================
+*.pem
+*.key
+*.cert
+*.p12
+*.jks
+**/serviceAccount.json
+**/.env
+!**/.env.example
