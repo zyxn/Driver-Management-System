@@ -42,12 +42,14 @@ import java.util.*
 @Composable
 fun AksiScreen() {
     val context = LocalContext.current
+    val viewModel = remember { AksiViewModel(context) }
+    val uiState by viewModel.uiState.collectAsState()
+    
     var selectedType by remember { mutableStateOf<TripType?>(null) }
     var locationName by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var showTypeMenu by remember { mutableStateOf(false) }
-    var showSuccessDialog by remember { mutableStateOf(false) }
     var currentLocation by remember { mutableStateOf<Location?>(null) }
     var isLoadingLocation by remember { mutableStateOf(false) }
     var locationError by remember { mutableStateOf<String?>(null) }
@@ -520,8 +522,14 @@ fun AksiScreen() {
         Button(
             onClick = {
                 if (selectedType != null && locationName.isNotBlank() && description.isNotBlank() && currentLocation != null && photoUri != null) {
-                    // TODO: Save data with location
-                    showSuccessDialog = true
+                    val fullDescription = "[${selectedType?.displayName}] $description"
+                    viewModel.submitReport(
+                        placeName = locationName,
+                        description = fullDescription,
+                        latitude = currentLocation!!.latitude,
+                        longitude = currentLocation!!.longitude,
+                        imageUri = photoUri
+                    )
                 }
             },
             modifier = Modifier
@@ -529,28 +537,43 @@ fun AksiScreen() {
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
             shape = RoundedCornerShape(12.dp),
-            enabled = selectedType != null && locationName.isNotBlank() && description.isNotBlank() && currentLocation != null && photoUri != null
+            enabled = selectedType != null && locationName.isNotBlank() && description.isNotBlank() && currentLocation != null && photoUri != null && !uiState.isLoading
         ) {
-            Icon(
-                imageVector = Icons.Default.Save,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Simpan Aksi",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            if (uiState.isLoading) {
+                CircularProgressIndicator(color = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Menyimpan...", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Save,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Simpan Aksi",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
+
+        if (uiState.error != null) {
+            Text(
+                text = uiState.error!!,
+                color = Error,
+                fontSize = 14.sp,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            )
+        }
     }
     
     // Success Dialog
-    if (showSuccessDialog) {
+    if (uiState.isSuccess) {
         AlertDialog(
-            onDismissRequest = { showSuccessDialog = false },
+            onDismissRequest = { viewModel.resetState() },
             icon = {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
@@ -566,12 +589,12 @@ fun AksiScreen() {
                 )
             },
             text = {
-                Text("Aksi perjalanan berhasil disimpan")
+                Text("Aksi perjalanan berhasil tersimpan ke sistem.")
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        showSuccessDialog = false
+                        viewModel.resetState()
                         // Reset form
                         selectedType = null
                         locationName = ""

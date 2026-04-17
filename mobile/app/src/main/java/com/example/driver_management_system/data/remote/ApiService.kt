@@ -3,14 +3,32 @@ package com.example.driver_management_system.data.remote
 import com.example.driver_management_system.data.remote.dto.LoginRequest
 import com.example.driver_management_system.data.remote.dto.LoginResponse
 import com.example.driver_management_system.data.remote.dto.ReportResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiService {
+    @Multipart
+    @POST("reports")
+    suspend fun createReport(
+        @Part("user_id") userId: RequestBody,
+        @Part("place_name") placeName: RequestBody,
+        @Part("latitude") latitude: RequestBody,
+        @Part("longitude") longitude: RequestBody,
+        @Part("description") description: RequestBody,
+        @Part("reported_at_utc") reportedAtUtc: RequestBody,
+        @Part("timezone") timezone: RequestBody,
+        @Part("reported_at_local") reportedAtLocal: RequestBody,
+        @Part image: MultipartBody.Part?
+    ): Response<com.example.driver_management_system.data.remote.dto.ReportDto>
+
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
     

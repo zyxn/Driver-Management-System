@@ -95,6 +95,61 @@ class ReportRepositoryImpl(private val context: Context) : ReportRepository {
         }
     }
     
+    override suspend fun createReport(
+        userId: Int,
+        placeName: String,
+        description: String,
+        latitude: Double,
+        longitude: Double,
+        imageUri: android.net.Uri
+    ): Result<Boolean> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Get File from Uri
+                val contentResolver = context.contentResolver
+                val inputStream = contentResolver.openInputStream(imageUri)
+                val tempFile = File(context.cacheDir, "upload_temp_${System.currentTimeMillis()}.jpg")
+                tempFile.outputStream().use { output ->
+                    inputStream?.copyTo(output)
+                }
+
+                // Prepare parts
+                val requestFile = okhttp3.RequestBody.create(okhttp3.MediaType.parse("image/jpeg"), tempFile)
+                val imagePart = okhttp3.MultipartBody.Part.createFormData("image", tempFile.name, requestFile)
+
+                val userIdPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), userId.toString())
+                val placeNamePart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), placeName)
+                val latPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), latitude.toString())
+                val lngPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), longitude.toString())
+                val descPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), description)
+                
+                // Form date formats
+                val dateFormatUtc = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
+                    timeZone = TimeZone.getTimeZone("UTC")
+                }
+                val dateFormatLocal = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
+                val now = Date()
+                
+                val reportedAtUtcPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), dateFormatUtc.format(now))
+                val timezonePart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), TimeZone.getDefault().id)
+                val reportedAtLocalPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), dateFormatLocal.format(now))
+
+                val response = apiService.createReport(
+                    userIdPart, placeNamePart, latPart, lngPart, descPart,
+                    reportedAtUtcPart, timezonePart, reportedAtLocalPart, imagePart
+                )
+
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(true)
+                } else {
+                    Result.failure(Exception("Failed to create report: ${response.message()}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+    
     private fun determineTripType(title: String, description: String): TripType {
         val text = "$title $description".lowercase()
         

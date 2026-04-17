@@ -7,6 +7,7 @@ import (
 	"driver-management-backend/internal/infrastructure/database"
 	"driver-management-backend/internal/infrastructure/notification"
 	"driver-management-backend/internal/infrastructure/repository"
+	"driver-management-backend/internal/infrastructure/storage"
 	"driver-management-backend/internal/interface/http/handler"
 	"driver-management-backend/internal/interface/http/router"
 	"driver-management-backend/internal/usecase"
@@ -34,13 +35,14 @@ func NewApp(cfg *config.Config) *App {
 	reportRepo := repository.NewReportRepository(db)
 	locationRepo := repository.NewLocationRepository(db)
 	alertRepo := repository.NewAlertRepository(db)
+	storageRepo := storage.NewR2Storage(cfg)
 
 	// Initialize FCM service
 	fcmService := notification.NewFCMService(cfg.FCM.ProjectID, cfg.FCM.ServiceAccountPath)
 
 	// Initialize use cases
 	authUseCase := usecase.NewAuthUseCase(userRepo, cfg.JWT.Secret, cfg.JWT.Expiry)
-	reportUseCase := usecase.NewReportUseCase(reportRepo, userRepo)
+	reportUseCase := usecase.NewReportUseCase(reportRepo, userRepo, storageRepo)
 	locationUseCase := usecase.NewLocationUseCase(locationRepo, alertRepo, userRepo, fcmService, cfg)
 	userUseCase := usecase.NewUserUseCase(userRepo, locationRepo)
 	alertUseCase := usecase.NewAlertUsecase(alertRepo, userRepo, fcmService)

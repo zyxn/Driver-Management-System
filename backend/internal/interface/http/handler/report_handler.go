@@ -23,7 +23,9 @@ func (h *ReportHandler) CreateReport(c *fiber.Ctx) error {
 		})
 	}
 
-	report, err := h.reportUseCase.CreateReport(req)
+	fileHeader, _ := c.FormFile("image")
+
+	report, err := h.reportUseCase.CreateReport(req, fileHeader)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
