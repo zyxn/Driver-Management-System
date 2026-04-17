@@ -9,6 +9,16 @@ android {
     namespace = "com.example.driver_management_system"
     compileSdk = 36
 
+    // Membaca dari local.properties supaya tidak ter-push ke GitHub
+    val localProperties = java.util.Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localProperties.load(java.io.FileInputStream(localPropertiesFile))
+    }
+    // Fallback URL kalau local.properties tidak ada/kosong
+    val releaseApiUrl = localProperties.getProperty("RELEASE_API_URL", "https://default-api.com/api/v1/")
+    val debugApiUrl = localProperties.getProperty("DEBUG_API_URL", "http://10.0.2.2:3000/api/v1/")
+
     defaultConfig {
         applicationId = "com.example.driver_management_system"
         minSdk = 23
@@ -18,14 +28,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Default API URL (can be overridden per buildType)
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/api/v1/\"")
+        buildConfigField("String", "API_BASE_URL", "\"${debugApiUrl}\"")
     }
 
     buildTypes {
         debug {
-            // Emulator → host machine via 10.0.2.2
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/api/v1/\"")
+            buildConfigField("String", "API_BASE_URL", "\"${debugApiUrl}\"")
         }
         release {
             isMinifyEnabled = false
@@ -33,8 +41,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Production / ngrok URL — change this when deploying
-            buildConfigField("String", "API_BASE_URL", "\"https://ember-parted-unquizzically.ngrok-free.dev/api/v1/\"")
+            buildConfigField("String", "API_BASE_URL", "\"${releaseApiUrl}\"")
         }
     }
     compileOptions {
