@@ -1,0 +1,96 @@
+# ============================================
+# Driver Management System - Docker Compose
+# ============================================
+# Usage:
+#   docker compose up -d              → Start all services
+#   docker compose up -d --build      → Rebuild & start
+#   docker compose down               → Stop all services
+#   docker compose logs -f            → Follow logs
+#   docker compose exec backend ./seed → Run database seeder
+# ============================================
+
+services:
+  # ─────────────────────────────────────────
+  # PostgreSQL Database
+  # ─────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: dms-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-driver_management}
+    ports:
+      - "${DB_PORT_EXPOSE:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-driver_management}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - dms-network
+
+  # ─────────────────────────────────────────
+  # Go Backend (Fiber)
+  # ─────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dms-backend
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-driver_management}
+      DB_SSLMODE: disable
+      JWT_SECRET: ${JWT_SECRET:-driver-management-secret-key-change-in-production-2024}
+      JWT_EXPIRY: ${JWT_EXPIRY:-24h}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3001}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      FCM_SERVICE_ACCOUNT_PATH: ${FCM_SERVICE_ACCOUNT_PATH:-./serviceAccount.json}
+      SPEED_LIMIT: ${SPEED_LIMIT:-150}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - dms-network
+
+  # ─────────────────────────────────────────
+  # SvelteKit Frontend
+  # ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Baked into the JS bundle at build time
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api/v1}
+    container_name: dms-frontend
+    restart: unless-stopped
+    environment:
+      PORT: 3001
+      HOST: 0.0.0.0
+      ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3001}
+    ports:
+      - "${FRONTEND_PORT:-3001}:3001"
+    depends_on:
+      - backend
+    networks:
+      - dms-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  dms-network:
+    driver: bridge

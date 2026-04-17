@@ -12,6 +12,7 @@ type Config struct {
 	Server   ServerConfig
 	FCM      FCMConfig
 	Alert    AlertConfig
+	R2       R2Config
 }
 
 type DatabaseConfig struct {
@@ -42,6 +43,15 @@ type AlertConfig struct {
 	SpeedLimit float64
 }
 
+type R2Config struct {
+	AccountID       string
+	AccessKeyID     string
+	SecretAccessKey string
+	BucketName      string
+	Endpoint        string
+	PublicURL       string
+}
+
 func NewConfig() *Config {
 	jwtExpiry, _ := time.ParseDuration(getEnv("JWT_EXPIRY", "24h"))
 
@@ -68,6 +78,14 @@ func NewConfig() *Config {
 		},
 		Alert: AlertConfig{
 			SpeedLimit: parseFloat(getEnv("SPEED_LIMIT", "150")),
+		},
+		R2: R2Config{
+			AccountID:       getEnv("R2_ACCOUNT_ID", ""),
+			AccessKeyID:     getEnv("R2_ACCESS_KEY_ID", ""),
+			SecretAccessKey: getEnv("R2_SECRET_ACCESS_KEY", ""),
+			BucketName:      getEnv("R2_BUCKET_NAME", ""),
+			Endpoint:        getEnv("R2_ENDPOINT", ""),
+			PublicURL:       getEnv("R2_PUBLIC_URL", ""),
 		},
 	}
 }

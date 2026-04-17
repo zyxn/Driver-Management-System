@@ -17,15 +17,24 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Default API URL (can be overridden per buildType)
+        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/api/v1/\"")
     }
 
     buildTypes {
+        debug {
+            // Emulator → host machine via 10.0.2.2
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/api/v1/\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Production / ngrok URL — change this when deploying
+            buildConfigField("String", "API_BASE_URL", "\"https://ember-parted-unquizzically.ngrok-free.dev/api/v1/\"")
         }
     }
     compileOptions {
@@ -37,6 +46,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

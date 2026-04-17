@@ -1,0 +1,15 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+tmp/
+bin/
+dist/
+vendor/
+.env
+.air.toml
+README.md
+README-MOCK-LOCATION.md
+FCM_SETUP.md
+*.bat

@@ -1,0 +1,9 @@
+node_modules/
+.svelte-kit/
+build/
+.output/
+.vercel/
+.netlify/
+.env
+.env.*
+!.env.example
